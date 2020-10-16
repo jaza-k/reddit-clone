@@ -1,0 +1,28 @@
+{
+  "name": "lireddit-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon dist/index.js",
+    "dev1": "nodemon --exec ts-node src/index.ts",
+    "watch": "tsc -w",
+    "start": "node dist/index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^14.11.8",
+    "nodemon": "^2.0.5",
+    "ts-node": "^9.0.0",
+    "typescript": "^4.0.3"
+  },
+  "dependencies": {
+    "@mikro-orm/cli": "^4.1.1",
+    "@mikro-orm/core": "^4.1.0",
+    "@mikro-orm/migrations": "^4.1.1",
+    "@mikro-orm/postgresql": "^4.1.1",
+    "pg": "^8.4.1"
+  }
+}
