@@ -1,7 +1,7 @@
 {
   "name": "lireddit-server",
   "version": "1.0.0",
-  "description": "",
+  "description": "A basic Reddit clone built with Node",
   "main": "index.js",
   "scripts": {
     "dev": "nodemon dist/index.js",
