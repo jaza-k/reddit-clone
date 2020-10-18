@@ -1,5 +1,5 @@
 import { Entity, PrimaryKey, Property } from "@mikro-orm/core";
-import { Field, ObjectType, Int } from "type-graphql";
+import { Field, ObjectType } from "type-graphql";
 
 // class is both an ObjectType and Entity (decorators can be stacked)
 @ObjectType()
