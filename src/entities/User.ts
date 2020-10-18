@@ -1,10 +1,9 @@
 import { Entity, PrimaryKey, Property } from "@mikro-orm/core";
 import { Field, ObjectType } from "type-graphql";
 
-// class is both an ObjectType and Entity (decorators can be stacked)
 @ObjectType()
 @Entity()
-export class Post  {
+export class User {
 
   @Field()
   @PrimaryKey()
@@ -19,7 +18,11 @@ export class Post  {
   updatedAt = new Date();
 
   @Field()
-  @Property({ type: 'text' })
-  title!: string;
+  @Property({ type: 'text', unique: true })
+  username!: string;
+
+  // no field property as this is not exposed
+  @Property({ type: 'text' }) // will be stored as a hash
+  password!: string;
 
 }
