@@ -1,5 +1,5 @@
 import { User } from "../entities/User";
-import { Resolver, Mutation, Arg, InputType, Field, Ctx, ObjectType } from "type-graphql";
+import { Resolver, Mutation, Arg, InputType, Field, Ctx, ObjectType, Query } from "type-graphql";
 import { MyContext } from "src/types";
 import argon2 from "argon2";
 
@@ -34,13 +34,29 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
+    @Query(() => User, { nullable: true })
+    async me(
+        @Ctx() { req, em }: MyContext 
+    ) {
+        // check session object to check if user is logged in
+        if (!req.session.userId) {
+            return null
+        }
+
+        // use the user ID to fetch entire user object
+        const user = await em.findOne(User, { id: req.session.userId});
+        return user;
+    }
+
+
+
     // register function (returns User)
     @Mutation(() => UserResponse)
     async register(
         @Arg('options') options: UsernamePasswordInput,
-        @Ctx() { em }: MyContext 
+        @Ctx() { em, req }: MyContext 
     ): Promise <UserResponse> {
-        if (options.username.length <= 2) {
+        if (options.username.length < 2) {
             return {
                 errors: [{
                     field: "Username",
@@ -48,7 +64,7 @@ export class UserResolver {
                 }],
             };
         }
-        if (options.password.length <= 3) {
+        if (options.password.length < 3) {
             return {
                 errors: [{
                     field: "Password",
@@ -85,7 +101,7 @@ export class UserResolver {
     @Mutation(() => UserResponse)
     async login(
         @Arg('options') options: UsernamePasswordInput,
-        @Ctx() { em }: MyContext 
+        @Ctx() { em, req }: MyContext 
     ): Promise <UserResponse> {
         const user = await em.findOne(User, { username: options.username })
         // if user is not found
@@ -107,6 +123,10 @@ export class UserResolver {
                 }],
             };
         }
+
+        // store user ID session
+        req.session.userId = user.id; // set a cookie on the user & keep them logged in
+
         return { user };
     }
 }
