@@ -54,7 +54,7 @@ export class UserResolver {
     @Mutation(() => UserResponse)
     async register(
         @Arg('options') options: UsernamePasswordInput,
-        @Ctx() { em, req }: MyContext 
+        @Ctx() { em }: MyContext 
     ): Promise <UserResponse> {
         if (options.username.length < 2) {
             return {
