@@ -12,18 +12,25 @@ const Register: React.FC<registerProps> = ({}) => {
     const [,register] = useRegisterMutation();
     return (
         <Wrapper variant="small">
-            <Formik initialValues={{username: "", password: ""}} onSubmit={async (values, { setErrors }) => {
-                const response = await register(values);
-                if (response.data?.register.errors) {
-                    setErrors(toErrorMap(response.data.register.errors));
-                }
-            }}>
+
+            <Formik 
+                initialValues={{username: "", password: ""}} 
+                onSubmit={async (values, { setErrors }) => {
+                    const response = await register(values);
+                    if (response.data?.register.errors) {
+                        setErrors(toErrorMap(response.data.register.errors));
+                    }
+                }}
+            >
+
                 {({ isSubmitting }) => (
                     <Form>
                         <InputField name="username" placeholder="username" label="Username"/>
+
                         <Box mt={4}>
                             <InputField name="password" placeholder="password" label="Password" type="password"/>
                         </Box>
+
                         <Button mt={4} type="submit" variantColor="teal" isLoading={isSubmitting}>Register</Button>
                     </Form>
                 )}
@@ -33,3 +40,5 @@ const Register: React.FC<registerProps> = ({}) => {
 };
 
 export default Register
+
+// BENCHMARK 2:59:15 !!!!!!!!!!!!!!!!!!!!!!!!!!!! //
