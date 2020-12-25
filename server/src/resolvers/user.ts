@@ -2,6 +2,7 @@ import { User } from "../entities/User";
 import { Resolver, Mutation, Arg, InputType, Field, Ctx, ObjectType, Query } from "type-graphql";
 import { MyContext } from "src/types";
 import argon2 from "argon2";
+import { EntityManager } from "@mikro-orm/postgresql";
 
 // reusable inputs defined here
 @InputType()
@@ -74,16 +75,21 @@ export class UserResolver {
         }
 
         const hashedPassword = await argon2.hash(options.password); // hash the plain text password using argon2
-        const user = em.create(User, {
-            username: options.username, 
-            password: hashedPassword 
-        });
+        let user;
 
         try {
-            await em.persistAndFlush(user);
+            // use knex.js to write the query w/o needing mikro-orm
+            const result = await (em as EntityManager).createQueryBuilder(User).getKnexQuery().insert({
+                username: options.username, 
+                password: hashedPassword,
+                created_at: new Date(),
+                updated_at: new Date(),
+            }).returning('*');
+            user = result[0]; // let user be the first element from the response
+
         } catch(err) {
             // duplicate user error
-            if (err.code === "23505" || err.detail.includes("already exists")) {
+            if (err.code === "23505") { // || err.detail.includes("already exists")) {
                 return {
                     errors: [{
                         field: "Username",
@@ -91,7 +97,6 @@ export class UserResolver {
                     }],
                 };
             }
-            console.log("message: ", err.message);
         }
 
         return { user };
@@ -124,8 +129,7 @@ export class UserResolver {
             };
         }
 
-        // store user ID session
-        req.session.userId = user.id; // set a cookie on the user & keep them logged in
+        req.session.userId = user.id;
 
         return { user };
     }
