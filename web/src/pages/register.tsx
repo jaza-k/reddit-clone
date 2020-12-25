@@ -5,10 +5,12 @@ import Wrapper from '../components/Wrapper';
 import InputField from '../components/inputField';
 import { useRegisterMutation } from '../generated/graphql';
 import { toErrorMap } from '../utils/toErrorMap';
+import { useRouter } from 'next/router';
 
 interface registerProps {}
 
 const Register: React.FC<registerProps> = ({}) => {
+    const router = useRouter();
     const [,register] = useRegisterMutation();
     return (
         <Wrapper variant="small">
@@ -17,8 +19,14 @@ const Register: React.FC<registerProps> = ({}) => {
                 initialValues={{username: "", password: ""}} 
                 onSubmit={async (values, { setErrors }) => {
                     const response = await register(values);
+                    console.log(response);
                     if (response.data?.register.errors) {
                         setErrors(toErrorMap(response.data.register.errors));
+                        console.log(response.data.register.errors); // MAKE THIS SHOW IN THE UI
+                    }
+                    else if (response.data?.register.user) {
+                        // if function worked
+                        router.push("/"); // specify that we want to go back to homepage
                     }
                 }}
             >
@@ -40,5 +48,3 @@ const Register: React.FC<registerProps> = ({}) => {
 };
 
 export default Register
-
-// BENCHMARK 2:59:15 !!!!!!!!!!!!!!!!!!!!!!!!!!!! //
