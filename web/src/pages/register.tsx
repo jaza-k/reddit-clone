@@ -1,6 +1,6 @@
 import React from 'react';
 import { Form, Formik } from 'formik';
-import { Box, Button, FormControl, FormErrorMessage, FormLabel, Input } from '@chakra-ui/core';
+import { Box, Button } from '@chakra-ui/core';
 import Wrapper from '../components/Wrapper';
 import InputField from '../components/inputField';
 import { useRegisterMutation } from '../generated/graphql';
@@ -11,7 +11,7 @@ interface registerProps {}
 
 const Register: React.FC<registerProps> = ({}) => {
     const router = useRouter();
-    const [,register] = useRegisterMutation();
+    const [, register] = useRegisterMutation();
     return (
         <Wrapper variant="small">
 
@@ -19,10 +19,9 @@ const Register: React.FC<registerProps> = ({}) => {
                 initialValues={{username: "", password: ""}} 
                 onSubmit={async (values, { setErrors }) => {
                     const response = await register(values);
-                    console.log(response);
                     if (response.data?.register.errors) {
+                        console.log(response);
                         setErrors(toErrorMap(response.data.register.errors));
-                        console.log(response.data.register.errors); // MAKE THIS SHOW IN THE UI
                     }
                     else if (response.data?.register.user) {
                         // if function worked
