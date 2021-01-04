@@ -1,7 +1,7 @@
 import { ThemeProvider, CSSReset } from '@chakra-ui/core';
 import { cacheExchange, Cache, QueryInput } from '@urql/exchange-graphcache';
 import {Provider, createClient, dedupExchange, fetchExchange } from 'urql';
-import { LoginMutation, MeDocument, MeQuery, RegisterMutation } from '../generated/graphql';
+import { LoginMutation, LogoutMutation, MeDocument, MeQuery, RegisterMutation } from '../generated/graphql';
 import theme from '../theme'
 
 // custom wrapper function to help cast the types
@@ -24,6 +24,15 @@ const client = createClient({
     // update the cache, specifically the MeQuery, every time the mutation is run
     updates: {
       Mutation: {
+        logout: (_result, args, cache, info) => {
+          betterUpdateQuery<LogoutMutation, MeQuery>(
+            cache,
+            { query: MeDocument },
+            _result,
+            () => ({ me: null}) // set the me value to null
+          );
+        },
+
         login: (_result, args, cache, info) => {
           betterUpdateQuery<LoginMutation, MeQuery>(
             cache, 
