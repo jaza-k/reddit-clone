@@ -79,6 +79,11 @@ export type UsernamePasswordInput = {
   password: Scalars['String'];
 };
 
+export type RegularUserFragment = (
+  { __typename?: 'User' }
+  & Pick<User, 'id' | 'username'>
+);
+
 export type LoginMutationVariables = Exact<{
   options: UsernamePasswordInput;
 }>;
@@ -129,7 +134,12 @@ export type MeQuery = (
   )> }
 );
 
-
+export const RegularUserFragmentDoc = gql`
+    fragment RegularUser on User {
+  id
+  username
+}
+    `;
 export const LoginDocument = gql`
     mutation Login($options: UsernamePasswordInput!) {
   login(options: $options) {
