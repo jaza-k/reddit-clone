@@ -7,7 +7,7 @@ import { betterUpdateQuery } from "./betterUpdateQuery";
 export const createUrqlClient = (ssrExchange: any) => ({
     url: 'http://localhost:4000/graphql',
     fetchOptions: {
-      credentials: 'include',
+      credentials: 'include' as const, // for types to match up
     },
     exchanges: [dedupExchange, cacheExchange({
       // update the cache, specifically the MeQuery, every time the mutation is run
@@ -60,5 +60,5 @@ export const createUrqlClient = (ssrExchange: any) => ({
   
         },
       },
-    }), fetchExchange],
-})
+    }), ssrExchange, fetchExchange],
+});
