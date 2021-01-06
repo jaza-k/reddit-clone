@@ -6,6 +6,8 @@ import InputField from '../components/inputField';
 import { useLoginMutation } from '../generated/graphql';
 import { toErrorMap } from '../utils/toErrorMap';
 import { useRouter } from 'next/router';
+import { createUrqlClient } from '../utils/createUrqlClient';
+import { withUrqlClient } from 'next-urql';
 
 interface registerProps {}
 
@@ -45,4 +47,4 @@ const Login: React.FC<{}> = ({}) => {
     ); 
 };
 
-export default Login
+export default withUrqlClient(createUrqlClient)(Login); // SSR is off bc page is static + not important for SEO
