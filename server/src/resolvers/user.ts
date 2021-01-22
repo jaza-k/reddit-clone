@@ -1,17 +1,11 @@
 import { User } from "../entities/User";
-import { Resolver, Mutation, Arg, InputType, Field, Ctx, ObjectType, Query } from "type-graphql";
+import { Resolver, Mutation, Arg, Field, Ctx, ObjectType, Query } from "type-graphql";
 import { MyContext } from "src/types";
 import argon2 from "argon2";
 import { EntityManager } from "@mikro-orm/postgresql";
-
-// reusable inputs defined here
-@InputType()
-class UsernamePasswordInput {
-    @Field()
-    username: string
-    @Field()
-    password: string
-}
+import { COOKIE_NAME } from "../constants";
+import { UsernamePasswordInput } from "./UsernamePasswordInput";
+import { validateRegister } from "src/utils/validateRegister";
 
 // reusable field error object
 @ObjectType()
@@ -35,6 +29,13 @@ class UserResponse {
 
 @Resolver()
 export class UserResolver {
+    @Mutation(() => Boolean)
+    async forgotPassword(@Arg('email') email : string, @Ctx() {em} : MyContext) {
+        // const user = await em.findOne(User, {email});
+        return true;
+    }
+
+
     @Query(() => User, { nullable: true })
     async me(
         @Ctx() { req, em }: MyContext 
@@ -50,28 +51,15 @@ export class UserResolver {
     }
 
 
-
     // register function (returns User)
     @Mutation(() => UserResponse)
     async register(
         @Arg('options') options: UsernamePasswordInput,
         @Ctx() { em, req }: MyContext 
     ): Promise <UserResponse> {
-        if (options.username.length < 2) {
-            return {
-                errors: [{
-                    field: "Username",
-                    message: "Length must be greater than 2"
-                }],
-            };
-        }
-        if (options.password.length < 3) {
-            return {
-                errors: [{
-                    field: "Password",
-                    message: "Length must be greater than 3"
-                }],
-            };
+        const errors = validateRegister(options);
+        if (errors) {
+            return { errors };
         }
 
         const hashedPassword = await argon2.hash(options.password); // hash the plain text password using argon2
@@ -81,6 +69,7 @@ export class UserResolver {
             // use knex.js to write the query w/o needing mikro-orm
             const result = await (em as EntityManager).createQueryBuilder(User).getKnexQuery().insert({
                 username: options.username, 
+                email: options.email,
                 password: hashedPassword,
                 created_at: new Date(),
                 updated_at: new Date(),
@@ -88,6 +77,7 @@ export class UserResolver {
             user = result[0]; // let user be the first element from the response
 
         } catch(err) {
+            console.log(err);
             // duplicate user error
             if (err.code === "23505") { // || err.detail.includes("already exists")) {
                 return {
@@ -105,13 +95,20 @@ export class UserResolver {
         return { user };
     }
 
+
     // login function (returns UserResponse object above)
     @Mutation(() => UserResponse)
     async login(
-        @Arg('options') options: UsernamePasswordInput,
+        @Arg('usernameOrEmail') usernameOrEmail: string,
+        @Arg('password') password: string,
         @Ctx() { em, req }: MyContext 
     ): Promise <UserResponse> {
-        const user = await em.findOne(User, { username: options.username })
+        const user = await em.findOne(
+            User, 
+            usernameOrEmail.includes('@') 
+            ? { email: usernameOrEmail } 
+            : { username: usernameOrEmail }
+        );
         // if user is not found
         if (!user) {
             return {
@@ -121,7 +118,7 @@ export class UserResolver {
                 }],
             };
         }
-        const valid = await argon2.verify(user.password, options.password);
+        const valid = await argon2.verify(user.password, password);
         // if password cannot be validated
         if (!valid){
             return {
@@ -135,5 +132,22 @@ export class UserResolver {
         req.session.userId = user.id;
 
         return { user };
+    }
+
+    
+    @Mutation(() => Boolean)
+    logout(@Ctx() { req, res }: MyContext) {
+        return new Promise((resolve) => // function to remove session from Redis
+            req.session.destroy((err: any) => {
+                res.clearCookie(COOKIE_NAME); // clear the saved cookie
+                if (err) {
+                    console.log(err);
+                    resolve(false);
+                    return;
+                }
+
+                resolve(true);
+            })
+        );
     }
 }
