@@ -21,6 +21,10 @@ export class User {
   @Property({ type: 'text', unique: true })
   username!: string;
 
+  @Field()
+  @Property({ type: 'text', unique: true })
+  email!: string;
+
   // no field property as this is not an exposed field
   @Property({ type: 'text' }) // will be stored as a hash
   password!: string;
