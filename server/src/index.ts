@@ -1,27 +1,29 @@
 import "reflect-metadata";
 import { MikroORM } from "@mikro-orm/core";
-import { __prod__ } from "./constants";
+import { COOKIE_NAME, __prod__ } from "./constants";
 import microConfig from "./mikro-orm.config";
 import express from "express";
 import { ApolloServer } from "apollo-server-express";
 import { buildSchema } from "type-graphql";
 import { PostResolver } from "./resolvers/post";
 import { UserResolver } from "./resolvers/user";
-import redis from 'redis';
+import Redis from 'ioredis';
 import session from 'express-session';
 import connectRedis from 'connect-redis';
 import cors from 'cors';
+import { User } from "./entities/User";
 
 const main = async () => {
     const orm = await MikroORM.init(microConfig);
-    await orm.getMigrator().up(); // automatically runs on server restart
-
+    //await orm.em.nativeDelete(User, {});
+    //await orm.getMigrator().up(); // automatically runs new migrations on server restart
+2
     const app = express();
 
     /* connect-redis API placed here in order for session 
     middleware to run before apollo middleware */
     const RedisStore = connectRedis(session)
-    const redisClient = redis.createClient()
+    const redis = Redis()
 
     app.use(
         cors({
@@ -32,10 +34,10 @@ const main = async () => {
 
     app.use(
      session({
-            name: "qid",
+            name: COOKIE_NAME,
             // tell express-session we're using Redis
-            store: new RedisStore({ 
-                client: redisClient,
+            store: new RedisStore({
+                client: redis,
                 disableTouch: true // results in less requests going out to Redis
             }),
             cookie: {
@@ -56,7 +58,7 @@ const main = async () => {
             validate: false
         }),
         // special object that is accessible by all our objects
-        context: ({ req, res }) => ({ em: orm.em, req, res })
+        context: ({ req, res }) => ({ em: orm.em, req, res, redis })
     });
 
     // allow Apollo to internally configure various middleware
