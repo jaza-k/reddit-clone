@@ -42,7 +42,6 @@
     "ioredis": "^4.19.4",
     "nodemailer": "^6.4.17",
     "pg": "^8.4.1",
-    "redis": "^3.0.2",
     "reflect-metadata": "^0.1.13",
     "type-graphql": "^1.1.0",
     "uuid": "^8.3.2"
