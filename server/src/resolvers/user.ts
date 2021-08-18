@@ -1,11 +1,13 @@
 import { User } from "../entities/User";
 import { Resolver, Mutation, Arg, Field, Ctx, ObjectType, Query } from "type-graphql";
-import { MyContext } from "src/types";
+import { MyContext } from "../types";
 import argon2 from "argon2";
 import { EntityManager } from "@mikro-orm/postgresql";
 import { COOKIE_NAME } from "../constants";
 import { UsernamePasswordInput } from "./UsernamePasswordInput";
-import { validateRegister } from "src/utils/validateRegister";
+import { validateRegister } from "../utils/validateRegister";
+import { sendEmail } from "../utils/sendEmail";
+import { v4 } from "uuid";
 
 // reusable field error object
 @ObjectType()
@@ -30,8 +32,20 @@ class UserResponse {
 @Resolver()
 export class UserResolver {
     @Mutation(() => Boolean)
-    async forgotPassword(@Arg('email') email : string, @Ctx() {em} : MyContext) {
-        // const user = await em.findOne(User, {email});
+    async forgotPassword(@Arg('email') email : string, @Ctx() { em, redis } : MyContext) {
+        const user = await em.findOne(User, {email});
+        if (!user) {
+            return true;
+        }
+
+        // generated token used to identify user
+        const token = v4();
+    
+        await sendEmail(
+            email, 
+            `<a href="http://localhost:3000/change-password/${token}">Reset password</a>`   
+        );
+
         return true;
     }
 
@@ -77,12 +91,12 @@ export class UserResolver {
             user = result[0]; // let user be the first element from the response
 
         } catch(err) {
-            console.log(err);
+            //console.log(err);
             // duplicate user error
             if (err.code === "23505") { // || err.detail.includes("already exists")) {
                 return {
                     errors: [{
-                        field: "Username",
+                        field: "username",
                         message: "Username taken"
                     }],
                 };
@@ -113,7 +127,7 @@ export class UserResolver {
         if (!user) {
             return {
                 errors: [{
-                    field: "Username",
+                    field: "usernameOrEmail",
                     message: "Username doesn't exist"
                 }],
             };
@@ -123,7 +137,7 @@ export class UserResolver {
         if (!valid){
             return {
                 errors: [{
-                    field: "Password",
+                    field: "password",
                     message: "Incorrect password"
                 }],
             };
